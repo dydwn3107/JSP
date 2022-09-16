@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import co.micol.prj.common.Command;
+import co.micol.prj.member.command.AjaxMemberIdCheck;
 import co.micol.prj.member.command.MemberInsert;
 import co.micol.prj.member.command.MemberJoinForm;
 import co.micol.prj.member.command.MemberSelect;
@@ -38,7 +39,7 @@ public class FrontController extends HttpServlet {
 		map.put("/memberSelect.do", new MemberSelect()); //멤버 상세 정보
 		map.put("/memberJoinForm.do", new MemberJoinForm()); //멤버 입력 화면
 		map.put("/memberInsert.do", new MemberInsert()); //멤버 입력 처리
-		
+		map.put("/ajaxMemberIdCheck.do", new AjaxMemberIdCheck());
 	}
 	
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -58,12 +59,18 @@ public class FrontController extends HttpServlet {
 		String viewPage = command.exec(request, response);
 				//viewPage에 main/main이 들어온 것
 		if(!viewPage.endsWith(".do")) { // viewPage끝에 .do포함되있지 않다면
-			viewPage = "/WEB-INF/views/" + viewPage + ".jsp";
+			if(viewPage.startsWith("ajax:")) { // 리턴값 ajax를 처리하기 위한 view Resolve
+				response.setContentType("text/html; charset=UTF-8");
+				response.getWriter().append(viewPage.substring(5));
+				return;
+			} else { // 리턴값이 일반적인 페이지일 때 처리
+				viewPage = "/WEB-INF/views/" + viewPage + ".jsp";
+				RequestDispatcher dispatcher = request.getRequestDispatcher(viewPage);
+				dispatcher.forward(request, response);				
+			}
 			
-			RequestDispatcher dispatcher = request.getRequestDispatcher(viewPage);
-			dispatcher.forward(request, response);
 		}else {
-			response.sendRedirect(viewPage);
+			response.sendRedirect(viewPage); //리턴값이 *.do로 올때 처리
 		}
 		
 		
